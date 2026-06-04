@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>教学对话智能体 — 主流程（无框）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f5f5;
+    }
+    h1 { font-size: 18px; color: #37474f; margin: 0 0 8px; }
+    p { font-size: 13px; color: #607d8b; margin: 0 0 16px; line-height: 1.6; }
+    .toolbar { margin: 0 0 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .toolbar button {
+      font-family: inherit;
+      font-size: 13px;
+      color: #1565c0;
+      background: #fff;
+      border: 1px solid #90caf9;
+      border-radius: 6px;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: background .15s, box-shadow .15s;
+    }
+    .toolbar button:hover { background: #e3f2fd; box-shadow: 0 1px 4px rgba(21,101,192,.2); }
+    .toolbar .scale { font-size: 12px; color: #607d8b; }
+    .toolbar select { font-family: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid #cfd8dc; border-radius: 5px; }
+    .diagram {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 32px 24px;
+      overflow: auto;
+      min-height: 320px;
+    }
+    .diagram .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .diagram svg { max-width: none; }
+    .edgeLabel rect,
+    .edgeLabel .labelBkg {
+      fill: none !important;
+      stroke: none !important;
+      opacity: 0 !important;
+    }
+    .edgeLabel span,
+    .edgeLabel foreignObject div {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .edgeLabel text { fill: #37474f !important; }
+    .flowchart-link,
+    .edge-pattern { stroke: #90a4ae !important; stroke-width: 1.4px !important; }
+    .arrowheadPath,
+    marker path {
+      fill: #90a4ae !important;
+      stroke: #90a4ae !important;
+    }
+    #Start rect,
+    #SSO rect,
+    #Pick rect,
+    #Q rect,
+    #Reply rect,
+    #Trace rect {
+      fill: #e3f2fd !important;
+      stroke: #1565c0 !important;
+    }
+    #Auth polygon,
+    #Choice polygon {
+      fill: #fff8e1 !important;
+      stroke: #f9a825 !important;
+    }
+    #End rect {
+      fill: #eceff1 !important;
+      stroke: #607d8b !important;
+    }
+    #Note rect {
+      fill: #fffde7 !important;
+      stroke: #fbc02d !important;
+    }
+    #Auth .nodeLabel,
+    #Choice .nodeLabel { font-weight: 600; }
+    #Note .nodeLabel { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>教学对话智能体 — 主流程（无框）</h1>
+  <p>自上而下单主干：进入教务系统 → 统一认证 → 选择智能体 → 多轮问答（输入 → 回答 → 溯源）→ 用户选择换 / 留 / 退；右侧为规则说明。</p>
+  <div class="toolbar">
+    <button id="btn-svg" type="button">下载 SVG（矢量·最清晰）</button>
+    <button id="btn-png" type="button">下载 PNG（高清位图）</button>
+    <span class="scale">PNG 倍率
+      <select id="png-scale">
+        <option value="2">2×</option>
+        <option value="3" selected>3×</option>
+        <option value="4">4×</option>
+      </select>
+    </span>
+  </div>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Start([进入教务系统]) --> SSO[跳转统一认证]
+    SSO --> Auth{认证结果}
+    Auth -->|失败| SSO
+    Auth -->|成功| Pick[选择智能体<br/>教务 / 科研]
+    Pick --> Q[用户输入问题]
+    Q --> Reply[智能体回答]
+    Reply --> Trace[回答溯源]
+    Trace --> Choice{换 / 留 / 退}
+    Choice -->|留·继续对话| Q
+    Choice -->|换·切换智能体| Q
+    Choice -->|退| End([退出会话])
+
+    Note["📌 规则说明<br/><br/>1. 登录失败可重试，不结束会话<br/>2. 回答溯源：内部库名(不可跳转) / 外链(可跳转)<br/>3. 切换智能体：保留记录展示，不沿用原问答历史；<br/>　 换库回答，失败则停留原智能体(§4)<br/>4. 仅「退出会话」到达终点"]
+    Auth ~~~ Note
+
+    classDef box fill:#E3F2FD,stroke:#1565C0,color:#0D47A1
+    classDef dec fill:#FFF8E1,stroke:#F9A825,color:#5D4037
+    classDef fin fill:#ECEFF1,stroke:#607D8B,color:#37474F
+    classDef note fill:#FFFDE7,stroke:#FBC02D,color:#5D4037
+
+    class Start,SSO,Pick,Q,Reply,Trace box
+    class Auth,Choice dec
+    class End fin
+    class Note note
+    linkStyle 11 stroke:transparent,stroke-width:0px
+    </pre>
+  </div>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        edgeLabelBackground: "transparent",
+        edgeLabelTextColor: "#37474F",
+        lineColor: "#90A4AE",
+        arrowheadColor: "#90A4AE",
+        fontFamily: "PingFang SC, Microsoft YaHei, sans-serif",
+      },
+      flowchart: {
+        htmlLabels: false,
+        curve: "linear",
+        nodeSpacing: 45,
+        rankSpacing: 50,
+        padding: 14,
+      },
+      themeCSS:
+        ".edgeLabel rect,.edgeLabel .labelBkg{opacity:0!important;fill:none!important;stroke:none!important}" +
+        ".edgeLabel span,.edgeLabel foreignObject div{background:transparent!important;border:none!important;padding:0!important}" +
+        ".edgeLabel text{fill:#37474F!important}",
+    });
+
+    const FILE_NAME = "教学对话智能体-主流程";
+
+    function getSvgEl() {
+      const svg = document.querySelector(".diagram svg");
+      if (!svg) { alert("流程图尚未渲染完成，请稍候再试。"); return null; }
+      return svg;
+    }
+
+    // 把当前 SVG 序列化为带尺寸、白底的独立字符串
+    function serializeSvg(svg) {
+      const clone = svg.cloneNode(true);
+      const bbox = svg.getBBox();
+      const pad = 16;
+      const w = Math.ceil(bbox.width + pad * 2);
+      const h = Math.ceil(bbox.height + pad * 2);
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+      clone.setAttribute("width", w);
+      clone.setAttribute("height", h);
+      clone.setAttribute("viewBox", `${bbox.x - pad} ${bbox.y - pad} ${w} ${h}`);
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("x", bbox.x - pad);
+      bg.setAttribute("y", bbox.y - pad);
+      bg.setAttribute("width", w);
+      bg.setAttribute("height", h);
+      bg.setAttribute("fill", "#ffffff");
+      clone.insertBefore(bg, clone.firstChild);
+      return { text: '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        new XMLSerializer().serializeToString(clone), w, h };
+    }
+
+    function triggerDownload(href, filename) {
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    document.getElementById("btn-svg").addEventListener("click", () => {
+      const svg = getSvgEl();
+      if (!svg) return;
+      const { text } = serializeSvg(svg);
+      const blob = new Blob([text], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, FILE_NAME + ".svg");
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    });
+
+    document.getElementById("btn-png").addEventListener("click", () => {
+      const svg = getSvgEl();
+      if (!svg) return;
+      const scale = parseInt(document.getElementById("png-scale").value, 10) || 3;
+      const { text, w, h } = serializeSvg(svg);
+      const svg64 = "data:image/svg+xml;base64," +
+        btoa(unescape(encodeURIComponent(text)));
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = w * scale;
+        canvas.height = h * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          triggerDownload(url, FILE_NAME + "@" + scale + "x.png");
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }, "image/png");
+      };
+      img.onerror = () => alert("PNG 生成失败，请改用「下载 SVG」。");
+      img.src = svg64;
+    });
+  </script>
+</body>
+</html>

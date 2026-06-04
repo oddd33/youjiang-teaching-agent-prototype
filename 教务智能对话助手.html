@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>教学管理智能体 — 原型骨架</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1677ff',
+            'primary-hover': '#4096ff',
+            'primary-active': '#0958d9',
+            'uni-green': '#006633',
+            'uni-green-dark': '#004d26',
+            'uni-green-nav': '#005028',
+          },
+          borderRadius: {
+            ant: '8px',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --color-primary: #1677ff;
+      --color-text: rgba(0, 0, 0, 0.88);
+      --color-text-secondary: rgba(0, 0, 0, 0.65);
+      --color-border: #d9d9d9;
+      --radius: 8px;
+      --uni-green: #006633;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+      color: var(--color-text);
+      background: #fff;
+    }
+    .page-hidden {
+      display: none !important;
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      border-radius: var(--radius);
+      color: #fff;
+    }
+    .card-ant {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+    }
+    .input-ant {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+    }
+    .input-ant:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+    }
+    .uni-nav-link:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .agent-switch-btn.active {
+      background: #e6f4ff;
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .chat-gradient-bg {
+      background: linear-gradient(180deg, #f3e8ff 0%, #eef2ff 45%, #e8f4fd 100%);
+    }
+    .agent-icon-gradient {
+      background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #06b6d4 100%);
+    }
+    .widget-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(22, 119, 255, 0.08);
+    }
+    .system-grid-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    #chat-fullscreen-overlay {
+      background: #f0eef5;
+    }
+    #chat-fullscreen-overlay .fullscreen-card {
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    }
+    #chat-fullscreen-overlay .fullscreen-input-bar {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+    .settings-wrap {
+      position: relative;
+    }
+    .btn-settings-gear {
+      color: rgba(0, 0, 0, 0.45);
+      transition: color 0.2s, background 0.2s;
+    }
+    .btn-settings-gear:hover,
+    .btn-settings-gear[aria-expanded='true'] {
+      color: rgba(0, 0, 0, 0.88);
+      background: #f5f5f5;
+    }
+    .settings-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      min-width: 120px;
+      padding: 4px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow:
+        0 6px 16px 0 rgba(0, 0, 0, 0.08),
+        0 3px 6px -4px rgba(0, 0, 0, 0.12),
+        0 9px 28px 8px rgba(0, 0, 0, 0.05);
+      z-index: 20;
+    }
+    .settings-menu.hidden {
+      display: none;
+    }
+    .settings-menu .settings-menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 5px 12px;
+      font-size: 14px;
+      line-height: 22px;
+      color: rgba(0, 0, 0, 0.88);
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .settings-menu .settings-menu-item:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    #confirm-dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #confirm-dialog.hidden {
+      display: none;
+    }
+    #confirm-dialog-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: rgba(0, 0, 0, 0.45);
+    }
+    .confirm-dialog-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 400px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow:
+        0 6px 16px 0 rgba(0, 0, 0, 0.08),
+        0 3px 6px -4px rgba(0, 0, 0, 0.12),
+        0 9px 28px 8px rgba(0, 0, 0, 0.05);
+      padding: 20px 24px 16px;
+    }
+    #confirm-dialog-title {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 24px;
+      color: rgba(0, 0, 0, 0.88);
+    }
+    #confirm-dialog-message {
+      margin: 0 0 20px;
+      font-size: 14px;
+      line-height: 22px;
+      color: rgba(0, 0, 0, 0.65);
+    }
+    .confirm-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .confirm-dialog-actions button {
+      min-width: 64px;
+      height: 32px;
+      padding: 0 15px;
+      font-size: 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    #confirm-dialog-cancel {
+      color: rgba(0, 0, 0, 0.88);
+      background: #fff;
+      border: 1px solid #d9d9d9;
+    }
+    #confirm-dialog-cancel:hover {
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    #confirm-dialog-ok {
+      color: #fff;
+      background: var(--color-primary);
+      border: 1px solid var(--color-primary);
+      font-weight: 500;
+    }
+    #confirm-dialog-ok:hover {
+      background: #4096ff;
+      border-color: #4096ff;
+    }
+    .conversation-turn {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed #f0f0f0;
+    }
+    .conversation-turn:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .turn-step-label {
+      font-size: 10px;
+      color: rgba(0, 0, 0, 0.45);
+      margin-bottom: 4px;
+    }
+    .welcome-compact {
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(0, 0, 0, 0.45);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed #f0f0f0;
+    }
+    /* 统一身份认证 — SSO 全屏登录 */
+    #page-login .login-page-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(165deg, rgba(160, 195, 160, 0.92) 0%, rgba(210, 225, 205, 0.88) 35%, rgba(185, 200, 175, 0.9) 65%, rgba(140, 170, 140, 0.92) 100%);
+      pointer-events: none;
+    }
+    #page-login .login-page-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 55% at 25% 45%, rgba(255, 255, 255, 0.45) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 45% at 75% 55%, rgba(0, 102, 51, 0.1) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(120, 165, 210, 0.28) 0%, transparent 40%);
+    }
+    #login-backdrop {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .login-page-header {
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 14px 32px;
+      font-size: 14px;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 4px;
+      padding: 36px 40px 28px;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+    }
+    .login-card-title {
+      text-align: center;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--uni-green);
+      margin-bottom: 28px;
+      letter-spacing: 0.02em;
+    }
+    .login-input-group {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .login-input-group .login-input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #c0c0c0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+    .login-input-group input {
+      width: 100%;
+      padding: 11px 12px 11px 40px;
+      border: 1px solid #e8e8e8;
+      border-radius: 2px;
+      background: #fff;
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.88);
+    }
+    .login-input-group input::placeholder {
+      color: #bfbfbf;
+    }
+    .login-input-group input:focus {
+      outline: none;
+      border-color: var(--uni-green);
+    }
+    .login-input-group--password input {
+      padding-right: 42px;
+    }
+    .login-toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #c0c0c0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .login-toggle-password:hover {
+      color: #999;
+    }
+    .login-captcha-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .login-captcha-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 12px;
+      border: 1px solid #e8e8e8;
+      border-radius: 2px;
+      background: #fff;
+      font-size: 14px;
+    }
+    .login-captcha-row input::placeholder {
+      color: #bfbfbf;
+    }
+    .login-captcha-row input:focus {
+      outline: none;
+      border-color: var(--uni-green);
+    }
+    .login-captcha-display {
+      flex-shrink: 0;
+      width: 118px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 2px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      user-select: none;
+    }
+    .login-captcha-display .captcha-num {
+      color: var(--uni-green);
+    }
+    .login-captcha-display .captcha-op {
+      color: #9966cc;
+    }
+    .login-buttons-row {
+      display: flex;
+      gap: 14px;
+      margin-top: 6px;
+    }
+    .login-buttons-row button {
+      flex: 1;
+      padding: 11px 0;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      border-radius: 2px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-login-green {
+      background: var(--uni-green);
+    }
+    .btn-login-green:hover {
+      background: var(--uni-green-dark);
+    }
+    .btn-login-grey {
+      background: #999;
+    }
+    .btn-login-grey:hover {
+      background: #888;
+    }
+    .login-bottom-links {
+      text-align: right;
+      margin-top: 14px;
+    }
+    .login-bottom-links a {
+      color: var(--uni-green);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .login-bottom-links a:hover {
+      text-decoration: underline;
+    }
+    .login-bottom-links .link-divider {
+      color: #d9d9d9;
+      margin: 0 10px;
+    }
+    .login-demo-hint {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(0, 0, 0, 0.35);
+      line-height: 1.5;
+    }
+    .login-page-footer {
+      position: relative;
+      z-index: 10;
+      flex-shrink: 0;
+      padding: 14px 16px 18px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(0, 0, 0, 0.55);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+
+  <!-- ============================================================
+       APP SHELL — 三屏骨架（对应主流程 §1）
+       下轮 JS: showPage('entry' | 'login' | 'chat')
+       流程: 开始 → 统一身份认证 → 认证成功? → 展示智能体列表 → 点击选择 → 进入对话 → 多轮问答 → 结束会话
+       ============================================================ -->
+  <div id="app" class="min-h-screen relative">
+
+    <!-- ==================== SCREEN 1: 官网入口 (#page-entry) ==================== -->
+    <!-- 流程节点: 开始 / 登录智能体页面 -->
+    <div id="page-entry" class="min-h-screen flex flex-col relative" role="main" aria-label="官网首页入口">
+
+      <!-- 右江民族医学院官网 mock（参考 ymun.edu.cn + 截图1） -->
+      <div id="uni-homepage-mock" class="flex-1 flex flex-col min-h-screen">
+
+        <!-- 顶栏 -->
+        <div class="bg-uni-green text-white">
+          <div class="max-w-[1200px] mx-auto px-4 py-1.5 flex items-center justify-between text-xs opacity-90">
+            <span>欢迎访问右江民族医学院官方网站</span>
+            <span class="hidden sm:inline">English | 站内搜索</span>
+          </div>
+        </div>
+
+        <!-- Logo + 校名 + 校训 -->
+        <header class="bg-uni-green border-b border-uni-green-dark">
+          <div class="max-w-[1200px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4 min-w-0">
+              <div class="w-[72px] h-[72px] rounded-full bg-white flex items-center justify-center shrink-0 border-2 border-[#004d26] overflow-hidden">
+                <svg viewBox="0 0 64 64" class="w-14 h-14" aria-hidden="true">
+                  <circle cx="32" cy="32" r="28" fill="#006633"/>
+                  <path d="M32 14 L38 28 L52 30 L42 40 L44 54 L32 47 L20 54 L22 40 L12 30 L26 28 Z" fill="#fff" opacity="0.9"/>
+                  <circle cx="32" cy="32" r="8" fill="#006633"/>
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-wider" style="font-family: 'STKaiti', 'KaiTi', serif;">右江民族医学院</h1>
+                <p class="text-[10px] sm:text-xs text-white/75 mt-0.5 tracking-wide uppercase">Youjiang Medical University For Nationalities</p>
+              </div>
+            </div>
+            <p class="hidden lg:block text-3xl text-white/20 font-serif shrink-0" style="font-family: 'STKaiti', 'KaiTi', serif;">大医精诚</p>
+          </div>
+        </header>
+
+        <!-- 水平导航 -->
+        <nav class="bg-uni-green-nav" aria-label="官网主导航">
+          <div class="max-w-[1200px] mx-auto px-2">
+            <ul class="flex flex-wrap text-sm text-white">
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5 font-medium bg-white/15" tabindex="-1">首页</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">学校概况</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">机构设置</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">招生就业</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">教育教学</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">科学研究</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">学科建设</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">诚聘英才</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">公共服务</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">国际交流</a></li>
+              <li><a href="#" class="uni-nav-link block px-3 py-2.5" tabindex="-1">应用导航</a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Banner 轮播 + 右侧系统图标网格 -->
+        <section class="max-w-[1200px] mx-auto w-full px-0 sm:px-4 py-0 sm:py-3" aria-label="宣传横幅与系统入口">
+          <div class="flex flex-col sm:flex-row gap-0 sm:gap-2">
+            <!-- 红金 banner -->
+            <div class="relative flex-1 bg-[#c8102e] text-white overflow-hidden min-h-[200px] sm:min-h-[240px]">
+              <div class="absolute inset-0 opacity-30" style="background: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 200%22><path fill=%22%23ffd700%22 opacity=%220.15%22 d=%22M0 120 Q100 80 200 120 T400 120 L400 200 L0 200Z%22/></svg>') bottom/cover no-repeat;"></div>
+              <div class="relative h-full flex flex-col justify-center px-8 py-8">
+                <p class="text-yellow-300 text-lg font-bold mb-1">聚焦2026年全国两会</p>
+                <p class="text-white/85 text-sm max-w-md">深入学习贯彻全国两会精神 推动学校高质量发展</p>
+              </div>
+              <!-- 轮播页码 -->
+              <div class="absolute bottom-3 right-4 flex gap-1 text-[10px]">
+                <span class="w-5 h-5 rounded-full bg-white text-[#c8102e] flex items-center justify-center font-medium">1</span>
+                <span class="w-5 h-5 rounded-full bg-white/30 text-white flex items-center justify-center">2</span>
+                <span class="w-5 h-5 rounded-full bg-white/30 text-white flex items-center justify-center">3</span>
+                <span class="text-white/60 ml-1 self-center">…10</span>
+              </div>
+            </div>
+
+            <!-- 右侧深色系统面板 -->
+            <div class="w-full sm:w-[280px] shrink-0 bg-[#2a4a4a] text-white p-3 grid grid-cols-2 gap-1.5">
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">📋</span>
+                <span class="text-xs">OA系统</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">🎓</span>
+                <span class="text-xs">教务系统</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">📊</span>
+                <span class="text-xs">内控系统</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">✉️</span>
+                <span class="text-xs">邮件系统</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">🔍</span>
+                <span class="text-xs">文献检索</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">📝</span>
+                <span class="text-xs">学报投稿</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">🏢</span>
+                <span class="text-xs">资产管理</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">🌐</span>
+                <span class="text-xs">统一门户</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">🎒</span>
+                <span class="text-xs">迎新系统</span>
+              </a>
+              <a href="#" class="system-grid-item flex flex-col items-center justify-center py-3 px-1 rounded text-center" tabindex="-1">
+                <span class="text-xl mb-1 opacity-90">🌿</span>
+                <span class="text-xs">民族医药库</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- 三栏：学校要闻 | 校内通知 | 联系方式 -->
+        <main class="flex-1 bg-white border-t border-[#e8e8e8]">
+          <div class="max-w-[1200px] mx-auto px-4 py-4 grid md:grid-cols-3 gap-0 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-[#e8e8e8]">
+
+            <!-- 学校要闻 / 院系动态 -->
+            <section class="py-3 md:px-4 md:py-2">
+              <div class="flex items-center gap-2 mb-3 border-b-2 border-uni-green pb-1.5">
+                <span class="text-sm font-bold text-uni-green">学校要闻</span>
+                <span class="text-xs text-[rgba(0,0,0,0.45)]">|</span>
+                <span class="text-xs text-[rgba(0,0,0,0.45)]">院系动态</span>
+                <span class="ml-auto text-xs text-[rgba(0,0,0,0.45)]">更多 ›</span>
+              </div>
+              <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">06月02日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">右医附院成功开展首例机器人辅助手术</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月30日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">我校召开2025年夏季学期教学工作会议</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月28日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">2025届毕业生毕业典礼隆重举行</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月25日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">我校学子在全国大学生临床技能竞赛中获佳绩</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月22日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">民族医药研究院发表Nature子刊研究成果</span>
+                </li>
+              </ul>
+            </section>
+
+            <!-- 校内通知 / 学校公告 -->
+            <section class="py-3 md:px-4 md:py-2">
+              <div class="flex items-center gap-2 mb-3 border-b-2 border-uni-green pb-1.5">
+                <span class="text-sm font-bold text-uni-green">校内通知</span>
+                <span class="text-xs text-[rgba(0,0,0,0.45)]">|</span>
+                <span class="text-xs text-[rgba(0,0,0,0.45)]">学校公告</span>
+                <span class="ml-auto text-xs text-[rgba(0,0,0,0.45)]">更多 ›</span>
+              </div>
+              <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-2 items-start">
+                  <span class="text-[#c8102e] shrink-0 text-xs whitespace-nowrap">06月01日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">关于2024-2025学年第二学期选课安排的通知</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-[#c8102e] shrink-0 text-xs whitespace-nowrap">05月27日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">2025年端午节放假安排通知</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月24日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">关于开展期中教学检查工作的通知</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月20日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">关于组织参加全区医学教育论坛的通知</span>
+                </li>
+                <li class="flex gap-2 items-start">
+                  <span class="text-uni-green shrink-0 text-xs whitespace-nowrap">05月18日</span>
+                  <span class="text-[rgba(0,0,0,0.75)] leading-snug">2025年度国家自然科学基金项目申报培训通知</span>
+                </li>
+              </ul>
+            </section>
+
+            <!-- 联系方式 -->
+            <section class="py-3 md:px-4 md:py-2">
+              <div class="flex items-center gap-2 mb-3 border-b-2 border-uni-green pb-1.5">
+                <span class="text-sm font-bold text-uni-green">联系方式</span>
+              </div>
+              <ul class="space-y-2.5 text-sm text-[rgba(0,0,0,0.75)]">
+                <li class="flex items-center gap-2">
+                  <span class="text-base">📞</span>
+                  <span>校内电话：<strong class="font-normal">0776-2848652</strong></span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-base">✉️</span>
+                  <span>学校邮箱：office@ymun.edu.cn</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-base">📬</span>
+                  <span>书记/校长信箱</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-base mt-0.5">📍</span>
+                  <span>广西百色市城乡路98号</span>
+                </li>
+              </ul>
+              <div class="flex gap-3 mt-4">
+                <div class="w-16 h-16 bg-[#f5f5f5] border border-[#e8e8e8] rounded flex items-center justify-center text-[10px] text-[rgba(0,0,0,0.45)] text-center leading-tight">官方微信<br/>二维码</div>
+                <div class="w-16 h-16 bg-[#f5f5f5] border border-[#e8e8e8] rounded flex items-center justify-center text-[10px] text-[rgba(0,0,0,0.45)] text-center leading-tight">移动门户<br/>二维码</div>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="bg-[#f5f5f5] border-t border-[#e8e8e8] text-[rgba(0,0,0,0.45)] text-xs py-4 px-4">
+          <div class="max-w-[1200px] mx-auto flex flex-wrap justify-center gap-x-4 gap-y-1 mb-2">
+            <a href="#" class="hover:text-uni-green" tabindex="-1">网站地图</a>
+            <span>|</span>
+            <a href="#" class="hover:text-uni-green" tabindex="-1">联系我们</a>
+            <span>|</span>
+            <a href="#" class="hover:text-uni-green" tabindex="-1">隐私政策</a>
+            <span>|</span>
+            <a href="#" class="hover:text-uni-green" tabindex="-1">无障碍浏览</a>
+          </div>
+          <p class="text-center">版权所有 © 右江民族医学院 | 地址：广西百色市右江区城乡路98号 | 桂ICP备XXXXXXXX号</p>
+        </footer>
+      </div>
+
+      <!-- 浮动智能体入口 — 右下角（参考截图1） -->
+      <!-- TODO: click → showPage('login') — 流程: 登录智能体页面 → 跳转统一认证 -->
+      <div
+        id="agent-floating-widget"
+        class="fixed bottom-6 right-6 z-40 widget-shadow bg-white rounded-ant px-3 py-2.5 flex items-center gap-3"
+        aria-label="教学管理智能体入口"
+      >
+        <div class="agent-icon-gradient w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="rgba(255,255,255,0.2)"/>
+            <text x="12" y="16" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AI</text>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-[rgba(0,0,0,0.88)] whitespace-nowrap">教学管理智能体</p>
+          <button
+            type="button"
+            id="btn-entry-login"
+            class="btn-primary mt-1 px-4 py-1 text-xs font-medium"
+          >
+            立即登录
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 2: 统一身份认证 (#page-login) ==================== -->
+    <!-- 流程节点: 跳转统一认证 / 认证结果（失败 → 停留登录页） -->
+    <div
+      id="page-login"
+      class="page-hidden fixed inset-0 z-50 flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-label="统一身份认证"
+    >
+      <div class="login-page-bg" aria-hidden="true"></div>
+      <div id="login-backdrop" class="absolute inset-0" aria-hidden="true"></div>
+
+      <div class="login-page-header">统一身份认证平台</div>
+
+      <div class="relative z-10 flex-1 flex items-center justify-center px-4 pointer-events-none">
+        <div class="login-card pointer-events-auto">
+          <h2 class="login-card-title">账户登录</h2>
+
+          <form id="login-form" action="#" method="post" aria-label="统一身份认证登录">
+            <div class="login-input-group">
+              <span class="login-input-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input
+                id="login-username"
+                name="username"
+                type="text"
+                placeholder="请输入您的账号"
+                autocomplete="username"
+              />
+            </div>
+
+            <div class="login-input-group login-input-group--password">
+              <span class="login-input-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                placeholder="请输入密码"
+                autocomplete="current-password"
+              />
+              <button type="button" id="btn-login-password-toggle" class="login-toggle-password" aria-label="显示或隐藏密码">
+                <svg id="login-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="login-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="login-captcha-row">
+              <input
+                id="login-captcha"
+                name="captcha"
+                type="text"
+                placeholder="请输入算术答案"
+                autocomplete="off"
+              />
+              <div class="login-captcha-display" aria-hidden="true">
+                <span class="captcha-num">1</span><span class="captcha-op">&nbsp;+&nbsp;</span><span class="captcha-num">2</span><span class="captcha-op">&nbsp;=&nbsp;</span>
+              </div>
+            </div>
+
+            <div
+              id="login-error"
+              class="hidden rounded-ant border border-[#ffccc7] bg-[#fff2f0] px-3 py-2 text-sm text-[#ff4d4f] mb-3"
+              role="alert"
+            ></div>
+
+            <div class="login-buttons-row">
+              <button type="button" id="btn-login-submit" class="btn-login-green">登录</button>
+              <button type="button" id="btn-login-reset" class="btn-login-grey">重置</button>
+            </div>
+
+            <div class="login-bottom-links">
+              <a href="#" tabindex="-1" onclick="return false;">常见问题</a>
+              <span class="link-divider">|</span>
+              <a href="#" tabindex="-1" onclick="return false;">忘记密码</a>
+            </div>
+
+            <p class="login-demo-hint">原型演示：空字段直接登录，或 demo / 123456</p>
+          </form>
+        </div>
+      </div>
+
+      <footer class="login-page-footer">
+        右江民族医学院&nbsp;|&nbsp;地址：广西百色市城乡路98号&nbsp;|&nbsp;邮编：533000&nbsp;|&nbsp;帮助电话：数字化校园管理科—2827481
+      </footer>
+    </div>
+
+    <!-- ==================== SCREEN 3: 对话页 (#page-chat) ==================== -->
+    <!-- 流程节点: 认证成功 → 展示智能体列表 → 点击选择 → 进入对话 → 多轮问答 → 结束会话 -->
+    <div id="page-chat" class="page-hidden fixed inset-0 z-30 flex" role="main" aria-label="对话页">
+
+      <!-- 左侧：官网首页（简化 +  dimmed） -->
+      <div class="flex-1 min-w-0 overflow-hidden flex flex-col opacity-50 pointer-events-none select-none bg-white" aria-hidden="true">
+        <div class="bg-uni-green text-white px-4 py-1 text-[10px] opacity-90">欢迎访问右江民族医学院官方网站</div>
+        <header class="bg-uni-green border-b border-uni-green-dark">
+          <div class="px-4 py-2 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <span class="text-white text-[10px]">校徽</span>
+            </div>
+            <h1 class="text-base font-bold text-white" style="font-family: 'STKaiti', 'KaiTi', serif;">右江民族医学院</h1>
+          </div>
+        </header>
+        <nav class="bg-uni-green-nav">
+          <ul class="flex text-[10px] text-white px-1 overflow-hidden">
+            <li><span class="block px-2 py-1.5 bg-white/15">首页</span></li>
+            <li><span class="block px-2 py-1.5">学校概况</span></li>
+            <li><span class="block px-2 py-1.5">机构设置</span></li>
+            <li><span class="block px-2 py-1.5 hidden sm:block">教育教学</span></li>
+          </ul>
+        </nav>
+        <section class="flex shrink-0">
+          <div class="flex-1 bg-[#c8102e] text-white px-3 py-6 text-center">
+            <p class="text-sm font-bold">聚焦2026年全国两会</p>
+          </div>
+          <div class="w-24 bg-[#2a4a4a] grid grid-cols-2 gap-0.5 p-1">
+            <div class="text-[8px] text-white/70 text-center py-1">OA</div>
+            <div class="text-[8px] text-white/70 text-center py-1">教务</div>
+            <div class="text-[8px] text-white/70 text-center py-1">门户</div>
+            <div class="text-[8px] text-white/70 text-center py-1">邮件</div>
+          </div>
+        </section>
+        <div class="flex-1 grid grid-cols-3 gap-px bg-[#e8e8e8] overflow-hidden">
+          <div class="bg-white p-2 text-[9px] space-y-1">
+            <div class="text-uni-green font-bold border-b pb-0.5">学校要闻</div>
+            <p class="text-[rgba(0,0,0,0.5)] truncate">右医附院成功开展首例机器人辅助手术</p>
+            <p class="text-[rgba(0,0,0,0.5)] truncate">我校召开2025年夏季学期教学工作会议</p>
+          </div>
+          <div class="bg-white p-2 text-[9px] space-y-1">
+            <div class="text-uni-green font-bold border-b pb-0.5">校内通知</div>
+            <p class="text-[rgba(0,0,0,0.5)] truncate">关于2024-2025学年选课安排的通知</p>
+            <p class="text-[rgba(0,0,0,0.5)] truncate">2025年端午节放假安排通知</p>
+          </div>
+          <div class="bg-white p-2 text-[9px] space-y-1">
+            <div class="text-uni-green font-bold border-b pb-0.5">联系方式</div>
+            <p class="text-[rgba(0,0,0,0.5)]">0776-2848652</p>
+            <p class="text-[rgba(0,0,0,0.5)] truncate">广西百色市城乡路98号</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：对话侧边栏 ~400px -->
+      <aside class="w-full sm:w-[400px] shrink-0 bg-white shadow-[-4px_0_24px_rgba(0,0,0,0.12)] flex flex-col h-full min-h-0 border-l border-[#f0f0f0] overflow-hidden">
+
+        <!-- ----- 子状态 A：智能体列表 (#chat-view-agents) ----- -->
+        <!-- 流程: 认证成功 → 展示智能体列表 → 点击选择（教务/科研） -->
+        <!-- TODO: 选择智能体后隐藏此块，显示 #chat-sidebar-conversation -->
+        <section id="chat-view-agents" class="flex flex-col flex-1 min-h-0 overflow-y-auto" aria-label="智能体选择">
+
+          <header class="px-4 py-3 border-b border-[#f0f0f0] flex items-center justify-between shrink-0 bg-white gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-full bg-[#ff85c0] text-white flex items-center justify-center text-sm font-medium shrink-0">张</div>
+              <div class="min-w-0">
+                <p class="text-sm font-medium truncate">张老师</p>
+                <p class="text-xs text-[rgba(0,0,0,0.45)] truncate">已登录 · 请选择智能体</p>
+              </div>
+            </div>
+            <div id="agent-settings-wrap" class="settings-wrap shrink-0">
+              <button
+                type="button"
+                id="btn-agent-settings"
+                class="btn-settings-gear w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                aria-label="设置"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="agent-settings-menu"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7ZM19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1 0 1.4l-1.4 1.4a1 1 0 0 1-1.4 0l-.1-.1a1 1 0 0 0-1.1-.2 7.2 7.2 0 0 1-2.1.9 1 1 0 0 0-.7.9V21a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-.2a1 1 0 0 0-.7-.9 7.2 7.2 0 0 1-2.1-.9 1 1 0 0 0-1.1.2l-.1.1a1 1 0 0 1-1.4 0L4.3 17.5a1 1 0 0 1 0-1.4l.1-.1a1 1 0 0 0 .2-1.1 7.2 7.2 0 0 1-.9-2.1 1 1 0 0 0-.9-.7H2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h.2a1 1 0 0 0 .9-.7 7.2 7.2 0 0 1 .9-2.1 1 1 0 0 0-.2-1.1l-.1-.1a1 1 0 0 1 0-1.4L5.2 4.3a1 1 0 0 1 1.4 0l.1.1a1 1 0 0 0 1.1.2 7.2 7.2 0 0 1 2.1-.9 1 1 0 0 0 .7-.9V2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v.2a1 1 0 0 0 .7.9 7.2 7.2 0 0 1 2.1.9 1 1 0 0 0 1.1-.2l.1-.1a1 1 0 0 1 1.4 0l1.4 1.4a1 1 0 0 1 0 1.4l-.1.1a1 1 0 0 0-.2 1.1c.2.7.4 1.4.9 2.1a1 1 0 0 0 .9.7H22a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-.2a1 1 0 0 0-.9.7 7.2 7.2 0 0 1-.9 2.1Z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <div id="agent-settings-menu" class="settings-menu hidden" role="menu" aria-label="智能体选择设置">
+                <button type="button" id="btn-settings-exit" class="settings-menu-item" role="menuitem">退出</button>
+                <button type="button" id="btn-settings-continue" class="settings-menu-item" role="menuitem">继续对话</button>
+              </div>
+            </div>
+          </header>
+
+          <div class="p-4 bg-[#fafafa]">
+            <p class="text-sm text-[rgba(0,0,0,0.65)] mb-4 leading-relaxed">
+              您好，张老师！请选择要对话的智能体：
+            </p>
+
+            <div class="space-y-3">
+              <!-- 教务智能体 -->
+              <button type="button" id="btn-pick-teaching" data-agent-id="teaching" class="w-full text-left card-ant p-4 hover:border-primary transition-colors bg-white">
+                <div class="flex items-start gap-3">
+                  <div class="w-11 h-11 rounded-ant bg-[#e6f4ff] text-primary flex items-center justify-center text-xl shrink-0">🎓</div>
+                  <div>
+                    <h3 class="font-semibold text-sm mb-1">教务智能体</h3>
+                    <p class="text-xs text-[rgba(0,0,0,0.65)] leading-relaxed">
+                      选课、成绩、学籍、考务、实践教学等教务教学相关问题
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <!-- 科研智能体 -->
+              <button type="button" id="btn-pick-research" data-agent-id="research" class="w-full text-left card-ant p-4 hover:border-primary transition-colors bg-white">
+                <div class="flex items-start gap-3">
+                  <div class="w-11 h-11 rounded-ant bg-[#f6ffed] text-[#52c41a] flex items-center justify-center text-xl shrink-0">🔬</div>
+                  <div>
+                    <h3 class="font-semibold text-sm mb-1">科研智能体</h3>
+                    <p class="text-xs text-[rgba(0,0,0,0.65)] leading-relaxed">
+                      项目申报、成果管理、科研平台等科研相关问题
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ----- 子状态 B：对话界面 (#chat-sidebar-conversation) ----- -->
+        <!-- 流程: 进入对话 → 等待输入 → 多轮问答循环 → 结束会话（唯一终点） -->
+        <section
+          id="chat-sidebar-conversation"
+          class="hidden flex flex-col flex-1 min-h-0"
+          aria-label="对话界面"
+        >
+          <!-- 顶栏 -->
+          <header class="px-4 py-3 flex items-center justify-between shrink-0 bg-white/80 backdrop-blur-sm border-b border-white/50">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-gradient-to-br from-[#fce7f3] to-[#ddd6fe] flex items-center justify-center">
+                <svg viewBox="0 0 36 36" class="w-full h-full" aria-hidden="true">
+                  <circle cx="18" cy="14" r="7" fill="#c4b5fd"/>
+                  <ellipse cx="18" cy="32" rx="11" ry="8" fill="#c4b5fd"/>
+                  <circle cx="18" cy="12" r="6" fill="#fde68a"/>
+                </svg>
+              </div>
+              <p id="chat-agent-title" class="text-sm font-medium truncate text-[rgba(0,0,0,0.88)]">教务智能体</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" id="btn-fullscreen-chat" class="flex items-center gap-1 text-xs text-[rgba(0,0,0,0.65)] hover:text-primary">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="1" y="2" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M5 14h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                全屏对话
+              </button>
+              <div id="chat-settings-wrap" class="settings-wrap shrink-0">
+                <button
+                  type="button"
+                  id="btn-chat-settings"
+                  class="btn-settings-gear w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  aria-label="设置"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  aria-controls="chat-settings-menu"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7ZM19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1 0 1.4l-1.4 1.4a1 1 0 0 1-1.4 0l-.1-.1a1 1 0 0 0-1.1-.2 7.2 7.2 0 0 1-2.1.9 1 1 0 0 0-.7.9V21a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-.2a1 1 0 0 0-.7-.9 7.2 7.2 0 0 1-2.1-.9 1 1 0 0 0-1.1.2l-.1.1a1 1 0 0 1-1.4 0L4.3 17.5a1 1 0 0 1 0-1.4l.1-.1a1 1 0 0 0 .2-1.1 7.2 7.2 0 0 1-.9-2.1 1 1 0 0 0-.9-.7H2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h.2a1 1 0 0 0 .9-.7 7.2 7.2 0 0 1 .9-2.1 1 1 0 0 0-.2-1.1l-.1-.1a1 1 0 0 1 0-1.4L5.2 4.3a1 1 0 0 1 1.4 0l.1.1a1 1 0 0 0 1.1.2 7.2 7.2 0 0 1 2.1-.9 1 1 0 0 0 .7-.9V2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v.2a1 1 0 0 0 .7.9 7.2 7.2 0 0 1 2.1.9 1 1 0 0 0 1.1-.2l.1-.1a1 1 0 0 1 1.4 0l1.4 1.4a1 1 0 0 1 0 1.4l-.1.1a1 1 0 0 0-.2 1.1c.2.7.4 1.4.9 2.1a1 1 0 0 0 .9.7H22a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-.2a1 1 0 0 0-.9.7 7.2 7.2 0 0 1-.9 2.1Z"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <div id="chat-settings-menu" class="settings-menu hidden" role="menu" aria-label="对话设置">
+                  <button type="button" id="btn-chat-settings-exit" class="settings-menu-item" role="menuitem">退出</button>
+                  <button type="button" id="btn-chat-settings-continue" class="settings-menu-item" role="menuitem">继续对话</button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <!-- 消息区 + 右侧智能体切换栏 -->
+          <div class="chat-gradient-bg flex flex-1 min-h-0">
+            <div class="flex flex-col flex-1 min-w-0 min-h-[480px]">
+              <p
+                id="chat-topic-hint"
+                class="shrink-0 px-4 pt-3 pb-1 text-[11px] text-[rgba(0,0,0,0.55)] leading-snug border-b border-white/40 bg-white/30"
+              ></p>
+              <div class="flex-1 overflow-y-auto p-4 space-y-4" id="message-list" aria-label="消息记录"></div>
+
+            <!-- 输入区 — 参考截图2 -->
+            <div class="px-4 pb-4 pt-1 shrink-0">
+              <div class="bg-white rounded-ant shadow-sm flex items-center px-3 py-2 gap-2 border border-[#f0f0f0]">
+                <label class="sr-only" for="chat-input">输入消息</label>
+                <input
+                  id="chat-input"
+                  type="text"
+                  class="flex-1 text-xs border-0 outline-none bg-transparent placeholder:text-[rgba(0,0,0,0.25)]"
+                  placeholder="在这里输入你的问题"
+                />
+                <!-- TODO: 发送 → classify → reply / fallback → Continue → 继续问 -->
+                <button type="button" id="btn-send-message" class="text-[rgba(0,0,0,0.25)] hover:text-primary shrink-0 p-1" aria-label="发送">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            </div>
+
+            <!-- 右侧垂直智能体切换 -->
+            <nav id="agent-switcher" class="w-14 shrink-0 border-l border-white/50 bg-white/60 flex flex-col py-3 gap-2 px-1.5" aria-label="切换智能体">
+              <button
+                type="button"
+                id="btn-agent-teaching"
+                data-agent-id="teaching"
+                class="agent-switch-btn flex flex-col items-center gap-1 py-2.5 px-1 rounded-ant border border-transparent text-[10px] text-[rgba(0,0,0,0.65)] hover:border-primary/40 transition-colors"
+                title="教务智能体"
+              >
+                <span class="text-lg leading-none">🎓</span>
+                <span class="writing-mode-vertical text-center leading-tight" style="writing-mode: vertical-rl;">教务</span>
+              </button>
+              <button
+                type="button"
+                id="btn-agent-research"
+                data-agent-id="research"
+                class="agent-switch-btn flex flex-col items-center gap-1 py-2.5 px-1 rounded-ant border border-transparent text-[10px] text-[rgba(0,0,0,0.65)] hover:border-primary/40 transition-colors"
+                title="科研智能体"
+              >
+                <span class="text-lg leading-none">🔬</span>
+                <span style="writing-mode: vertical-rl;">科研</span>
+              </button>
+            </nav>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ==================== 全屏对话 (#chat-fullscreen-overlay) ==================== -->
+    <div
+      id="chat-fullscreen-overlay"
+      class="page-hidden fixed inset-0 z-[60] flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-label="全屏对话"
+    >
+      <header class="shrink-0 px-5 sm:px-8 pt-5 pb-3 flex items-center gap-3 max-w-5xl mx-auto w-full">
+        <button
+          type="button"
+          id="btn-exit-fullscreen-chat"
+          class="w-8 h-8 rounded-full bg-white/80 text-[rgba(0,0,0,0.55)] hover:text-primary hover:bg-white flex items-center justify-center shrink-0 shadow-sm border border-[#e8e8e8]"
+          aria-label="退出全屏"
+          title="退出全屏"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 3L4 8l6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-gradient-to-br from-[#fce7f3] to-[#ddd6fe] flex items-center justify-center">
+          <svg viewBox="0 0 36 36" class="w-full h-full" aria-hidden="true">
+            <circle cx="18" cy="14" r="7" fill="#c4b5fd"/>
+            <ellipse cx="18" cy="32" rx="11" ry="8" fill="#c4b5fd"/>
+            <circle cx="18" cy="12" r="6" fill="#fde68a"/>
+          </svg>
+        </div>
+        <p id="fullscreen-agent-title" class="text-sm font-medium truncate text-[rgba(0,0,0,0.88)] flex-1 min-w-0">
+          教学管理智能体
+        </p>
+      </header>
+
+      <div class="flex-1 flex flex-col min-h-0 px-5 sm:px-8 pb-6 max-w-5xl mx-auto w-full">
+        <div
+          id="fullscreen-message-list"
+          class="fullscreen-card flex-1 min-h-0 overflow-y-auto bg-white rounded-2xl px-5 sm:px-8 py-5 sm:py-6"
+          aria-label="全屏消息记录"
+        ></div>
+
+        <div class="shrink-0 mt-4 sm:mt-5">
+          <div class="fullscreen-input-bar bg-white rounded-full flex items-center px-4 sm:px-5 py-3 gap-2 border border-[#f0f0f0]">
+            <label class="sr-only" for="fullscreen-chat-input">输入消息</label>
+            <input
+              id="fullscreen-chat-input"
+              type="text"
+              class="flex-1 text-sm border-0 outline-none bg-transparent placeholder:text-[rgba(0,0,0,0.25)]"
+              placeholder="在这里输入你的问题"
+            />
+            <button
+              type="button"
+              id="btn-fullscreen-send-message"
+              class="text-[rgba(0,0,0,0.25)] hover:text-primary shrink-0 p-1"
+              aria-label="发送"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-center text-[11px] text-[rgba(0,0,0,0.35)] mt-2">
+            内容由AI大模型生成，请仔细甄别
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div
+    id="confirm-dialog"
+    class="hidden"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-dialog-title"
+    aria-describedby="confirm-dialog-message"
+  >
+    <div id="confirm-dialog-backdrop" aria-hidden="true"></div>
+    <div class="confirm-dialog-card">
+      <h3 id="confirm-dialog-title">提示</h3>
+      <p id="confirm-dialog-message"></p>
+      <div class="confirm-dialog-actions">
+        <button type="button" id="confirm-dialog-cancel">取消</button>
+        <button type="button" id="confirm-dialog-ok">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-2 left-2 z-[60] text-[10px] text-[rgba(0,0,0,0.45)] bg-white/90 border border-[#d9d9d9] rounded-ant px-2 py-1 shadow-sm max-w-sm leading-relaxed">
+    交互原型：空字段一键进入；或 demo / 123456。设置齿轮 → 退出/继续对话均需二次确认。
+  </div>
+
+  <script>
+    (function () {
+      const DEMO_USERNAME = 'demo';
+      const DEMO_PASSWORD = '123456';
+
+      const AGENTS = {
+        teaching: {
+          id: 'teaching',
+          name: '教务智能体',
+          hint: '可咨询选课、成绩、学籍、考务、实践教学等教务相关问题',
+          welcome:
+            '您好～我是教务智能体，选课、成绩、学籍、考务、实践教学等问题都可以问我，请描述您的问题～',
+          mockReply:
+            '已收到您的问题。教务智能体将根据校历与教务规章为您检索解答（原型演示回复）。',
+        },
+        research: {
+          id: 'research',
+          name: '科研智能体',
+          hint: '可咨询项目申报、成果管理、科研平台等科研相关问题',
+          welcome:
+            '您好～我是科研智能体，项目申报、成果管理、科研平台等问题都可以问我，请描述您的问题～',
+          mockReply:
+            '已收到您的问题。科研智能体将为您检索科研政策与办事指南（原型演示回复）。',
+        },
+      };
+
+      /** §3 溯源演示：welcome + 内部 / 联网 / 混合来源各一例 */
+      const DEMO_EXCHANGES = {
+        teaching: [
+          {
+            role: 'user',
+            text: '请问2024-2025学年第二学期期末考试安排是怎样的？',
+            time: '09:12',
+          },
+          {
+            role: 'assistant',
+            text:
+              '根据校历与考务安排，2024-2025学年第二学期期末集中考试时间为 2025年6月16日至6月27日[1]。缓考申请须于考前一周通过教务系统提交[2]。具体科目时间以各学院通知为准。',
+            time: '09:12',
+            citationMode: 'internal',
+            citations: [
+              { index: 1, type: 'internal', label: '2024-2025学年校历' },
+              {
+                index: 2,
+                type: 'internal',
+                label: '教务处关于2024-2025学年第二学期期末考试安排的通知',
+              },
+            ],
+          },
+          {
+            role: 'user',
+            text: '医学类专业认证（临床医学）的最新标准有哪些核心指标？',
+            time: '09:14',
+          },
+          {
+            role: 'assistant',
+            text:
+              '校内知识库暂无完整说明，已通过联网检索为您整理：临床医学专业认证强调师资队伍、资源配置、学生发展与教育成果等维度[1]，具体指标以教育部临床医学专业认证工作委员会发布的工作方案为准[2]。',
+            time: '09:14',
+            citationMode: 'external',
+            citations: [
+              {
+                index: 1,
+                type: 'external',
+                title: '教育部临床医学专业认证工作委员会 — 认证标准与工作指南',
+                url: 'https://www.wcupm.org/',
+              },
+              {
+                index: 2,
+                type: 'external',
+                title: '教育部关于深化本科教育教学改革全面提高人才培养质量的意见',
+                url: 'http://www.moe.gov.cn/srcsite/A08/moe_740/s3864/202010/t20201015_494851.html',
+              },
+            ],
+          },
+          {
+            role: 'user',
+            text: '2025届毕业生学分认定与学位申请需要满足哪些条件？',
+            time: '09:16',
+          },
+          {
+            role: 'assistant',
+            text:
+              '结合校内规章与教育部政策：须完成培养方案规定的全部课程学分[1]，实践教学与毕业论文成绩合格后方可提交学位申请[2]。学位授予还须符合《学位法》及国务院学位委员会有关规定[3]，学分认定与转专业、辅修等情形按教育部学位管理与学校实施细则执行[4]。',
+            time: '09:16',
+            citationMode: 'mixed',
+            internalCitations: [
+              { index: 1, label: '右江民族医学院本科生学分管理办法（2024年修订）' },
+              { index: 2, label: '教务处关于2025届本科毕业生学位申请工作的通知' },
+            ],
+            externalCitations: [
+              {
+                index: 3,
+                title: '中华人民共和国学位法',
+                url: 'http://www.npc.gov.cn/npc/c30834/202407/a0c995b43c884d8e8f6e42c7e0a0e3e4.shtml',
+              },
+              {
+                index: 4,
+                title: '国务院学位委员会 — 学士学位授权与授予管理办法',
+                url: 'http://www.moe.gov.cn/srcsite/A08/moe_743/202109/t20210930_572211.html',
+              },
+            ],
+          },
+        ],
+        research: [
+          {
+            role: 'user',
+            text: '学校2025年度国家自然科学基金项目申报截止时间是？',
+            time: '10:05',
+          },
+          {
+            role: 'assistant',
+            text:
+              '根据科研处通知，2025年度国家自然科学基金集中受理期为 2025年1月15日至3月20日[1]，校内初审材料须于 3月10日前 提交至科研处[2]。',
+            time: '10:05',
+            citationMode: 'internal',
+            citations: [
+              { index: 1, type: 'internal', label: '科研处2025年度国家自然科学基金项目申报指南' },
+              { index: 2, type: 'internal', label: '右江民族医学院科研项目管理暂行办法' },
+            ],
+          },
+          {
+            role: 'user',
+            text: '广西科技计划重大专项2025年申报指南在哪里查看？',
+            time: '10:07',
+          },
+          {
+            role: 'assistant',
+            text:
+              '该问题需参考自治区科技厅最新政策，已通过联网检索：2025年广西科技计划重大专项申报指南已发布[1]，重点支持民族医药、临床医学等领域[2]。',
+            time: '10:07',
+            citationMode: 'external',
+            citations: [
+              {
+                index: 1,
+                type: 'external',
+                title: '广西壮族自治区科学技术厅 — 2025年广西科技计划项目申报指南',
+                url: 'http://kjt.gxzf.gov.cn/',
+              },
+              {
+                index: 2,
+                type: 'external',
+                title: '广西科技计划重大专项管理办法（2024年修订）',
+                url: 'http://kjt.gxzf.gov.cn/zwgk/fdzdgknr/zcfg/',
+              },
+            ],
+          },
+          {
+            role: 'user',
+            text: '科研成果转化收益分配与知识产权归属在学校如何规定？',
+            time: '10:09',
+          },
+          {
+            role: 'assistant',
+            text:
+              '校内制度与国家政策一并说明：职务科技成果转化收益按学校分配办法在团队与学院间划分[1]，知识产权原则上归学校所有，合作研发另有约定的除外[2]。国家层面强调促进科技成果转化与权益激励[3]，具体申报与登记流程以科研处当年指南为准[4]。',
+            time: '10:09',
+            citationMode: 'mixed',
+            internalCitations: [
+              { index: 1, label: '右江民族医学院科技成果转化收益分配暂行办法' },
+              { index: 2, label: '科研处关于职务科技成果知识产权归属的说明' },
+            ],
+            externalCitations: [
+              {
+                index: 3,
+                title: '中华人民共和国促进科技成果转化法',
+                url: 'http://www.npc.gov.cn/npc/c30834/201508/7c274b43c884d8e8f6e42c7e0a0e3e4.shtml',
+              },
+              {
+                index: 4,
+                title: '科技部等九部门 — 赋予科研人员职务科技成果所有权或长期使用权试点实施方案',
+                url: 'https://www.most.gov.cn/xxgk/xinxifenlei/fdzdgknr/kxyjfz/202110/t20211019_177672.html',
+              },
+            ],
+          },
+        ],
+      };
+
+      const pages = {
+        entry: document.getElementById('page-entry'),
+        login: document.getElementById('page-login'),
+        chat: document.getElementById('page-chat'),
+      };
+      const chatViewAgents = document.getElementById('chat-view-agents');
+      const chatViewConversation = document.getElementById('chat-sidebar-conversation');
+      const loginError = document.getElementById('login-error');
+      const loginForm = document.getElementById('login-form');
+      const messageList = document.getElementById('message-list');
+      const fullscreenOverlay = document.getElementById('chat-fullscreen-overlay');
+      const fullscreenMessageList = document.getElementById('fullscreen-message-list');
+      const fullscreenAgentTitle = document.getElementById('fullscreen-agent-title');
+      const fullscreenChatInput = document.getElementById('fullscreen-chat-input');
+      const chatAgentTitle = document.getElementById('chat-agent-title');
+      const chatTopicHint = document.getElementById('chat-topic-hint');
+      const chatInput = document.getElementById('chat-input');
+      const agentSwitcherBtns = document.querySelectorAll('#agent-switcher [data-agent-id]');
+
+      let currentAgentId = null;
+      let sessionConversationAgentId = null;
+      let fullscreenChatOpen = false;
+      const messagesByAgent = { teaching: [], research: [] };
+      const btnAgentSettings = document.getElementById('btn-agent-settings');
+      const agentSettingsMenu = document.getElementById('agent-settings-menu');
+      const agentSettingsWrap = document.getElementById('agent-settings-wrap');
+      const btnChatSettings = document.getElementById('btn-chat-settings');
+      const chatSettingsMenu = document.getElementById('chat-settings-menu');
+      const chatSettingsWrap = document.getElementById('chat-settings-wrap');
+      const confirmDialog = document.getElementById('confirm-dialog');
+      const confirmDialogMessage = document.getElementById('confirm-dialog-message');
+      const confirmDialogTitle = document.getElementById('confirm-dialog-title');
+      let confirmOnConfirm = null;
+
+      const CONFIRM_CONTINUE_AGENT_MESSAGE = '确定继续上次对话吗？';
+      const CONFIRM_CONTINUE_CHAT_MESSAGE = '确定继续当前对话吗？';
+
+      function showConfirm(message, onConfirm, title) {
+        confirmDialogMessage.textContent = message;
+        confirmDialogTitle.textContent = title || '提示';
+        confirmOnConfirm = typeof onConfirm === 'function' ? onConfirm : null;
+        confirmDialog.classList.remove('hidden');
+      }
+
+      function hideConfirm() {
+        confirmDialog.classList.add('hidden');
+        confirmOnConfirm = null;
+      }
+
+      function hideSettingsMenu(btn, menu) {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+
+      function toggleSettingsMenu(btn, menu) {
+        const willOpen = menu.classList.contains('hidden');
+        if (willOpen) {
+          menu.classList.remove('hidden');
+          btn.setAttribute('aria-expanded', 'true');
+        } else {
+          hideSettingsMenu(btn, menu);
+        }
+      }
+
+      function hideAgentSettingsMenu() {
+        hideSettingsMenu(btnAgentSettings, agentSettingsMenu);
+      }
+
+      function toggleAgentSettingsMenu() {
+        toggleSettingsMenu(btnAgentSettings, agentSettingsMenu);
+      }
+
+      function hideChatSettingsMenu() {
+        hideSettingsMenu(btnChatSettings, chatSettingsMenu);
+      }
+
+      function toggleChatSettingsMenu() {
+        toggleSettingsMenu(btnChatSettings, chatSettingsMenu);
+      }
+
+      function agentHasConversationHistory(agentId) {
+        return !!(agentId && messagesByAgent[agentId] && messagesByAgent[agentId].length > 0);
+      }
+
+      function continueAgentConversation() {
+        hideAgentSettingsMenu();
+        const resumeId = currentAgentId || sessionConversationAgentId;
+        if (!resumeId || !agentHasConversationHistory(resumeId)) return;
+        if (!currentAgentId) {
+          selectAgent(resumeId, false);
+        }
+        showChatSubview('conversation');
+        renderMessages(resumeId);
+      }
+
+      function showPage(name) {
+        const showEntry = name === 'entry' || name === 'login';
+        pages.entry.classList.toggle('page-hidden', !showEntry);
+        pages.login.classList.toggle('page-hidden', name !== 'login');
+        pages.chat.classList.toggle('page-hidden', name !== 'chat');
+        if (name !== 'login') hideLoginError();
+      }
+
+      function showChatSubview(view) {
+        const isAgents = view === 'agents';
+        if (isAgents) showFullscreenChat(false);
+        chatViewAgents.classList.toggle('hidden', !isAgents);
+        chatViewConversation.classList.toggle('hidden', isAgents);
+        chatViewConversation.classList.toggle('flex', !isAgents);
+      }
+
+      function showFullscreenChat(show) {
+        if (show && !currentAgentId) return;
+        fullscreenChatOpen = !!show;
+        fullscreenOverlay.classList.toggle('page-hidden', !fullscreenChatOpen);
+        document.body.style.overflow = fullscreenChatOpen ? 'hidden' : '';
+        if (fullscreenChatOpen && currentAgentId) {
+          renderMessages(currentAgentId);
+          fullscreenChatInput.focus();
+        }
+      }
+
+      function hideLoginError() {
+        loginError.textContent = '';
+        loginError.classList.add('hidden');
+      }
+
+      function showLoginError(message) {
+        loginError.textContent = message;
+        loginError.classList.remove('hidden');
+      }
+
+      function resetChatState() {
+        hideConfirm();
+        hideAgentSettingsMenu();
+        hideChatSettingsMenu();
+        showFullscreenChat(false);
+        currentAgentId = null;
+        sessionConversationAgentId = null;
+        messagesByAgent.teaching = [];
+        messagesByAgent.research = [];
+        messageList.innerHTML = '';
+        fullscreenMessageList.innerHTML = '';
+        chatInput.value = '';
+        fullscreenChatInput.value = '';
+        showChatSubview('agents');
+        updateAgentSwitcherUI(null);
+      }
+
+      function endSession() {
+        resetChatState();
+        showPage('entry');
+      }
+
+      function formatTime() {
+        const d = new Date();
+        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+
+      function renderWelcome(agentId) {
+        const agent = AGENTS[agentId];
+        return (
+          '<div class="welcome-compact" role="note" aria-label="欢迎语">' +
+          '<span class="text-[#9254de] font-medium">Hi</span> · ' +
+          escapeHtml(agent.welcome) +
+          '</div>'
+        );
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function escapeAttr(str) {
+        return escapeHtml(str).replace(/'/g, '&#39;');
+      }
+
+      /** §3：内部纯文本；外部可点击；mixed 两段连续编号 */
+      function renderCitationList(citations, isExternal) {
+        return citations
+          .map(function (c) {
+            if (isExternal) {
+              return (
+                '<li class="leading-relaxed">' +
+                '<span class="text-[rgba(0,0,0,0.45)]">[' +
+                c.index +
+                ']</span> ' +
+                '<a href="' +
+                escapeAttr(c.url) +
+                '" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">' +
+                escapeHtml(c.title) +
+                '</a></li>'
+              );
+            }
+            return (
+              '<li class="leading-relaxed">' +
+              '<span class="text-[rgba(0,0,0,0.45)]">[' +
+              c.index +
+              ']</span> ' +
+              escapeHtml(c.label) +
+              ' <span class="inline-block text-[10px] px-1 py-px rounded border border-[#d9d9d9] bg-[#fafafa] text-[rgba(0,0,0,0.45)] align-middle">内部知识库</span></li>'
+            );
+          })
+          .join('');
+      }
+
+      function renderCitationSection(citations, header, sub, isExternal) {
+        if (!citations || citations.length === 0) return '';
+        return (
+          '<div class="' +
+          (isExternal ? 'mt-2 ' : '') +
+          '">' +
+          '<p class="text-[10px] text-[rgba(0,0,0,0.45)] mb-1">' +
+          header +
+          ' <span class="text-[rgba(0,0,0,0.35)]">· ' +
+          sub +
+          '</span></p>' +
+          '<ul class="text-xs text-[rgba(0,0,0,0.45)] space-y-1 list-none pl-0 m-0">' +
+          renderCitationList(citations, isExternal) +
+          '</ul></div>'
+        );
+      }
+
+      function renderCitations(message) {
+        if (message.citationMode === 'mixed') {
+          var internal = message.internalCitations || [];
+          var external = message.externalCitations || [];
+          if (internal.length === 0 && external.length === 0) return '';
+          return (
+            '<div class="mt-2.5 pt-2 border-t border-[#f0f0f0]">' +
+            renderCitationSection(internal, '来源', '内部知识库', false) +
+            renderCitationSection(external, '参考索引', '联网检索', true) +
+            '</div>'
+          );
+        }
+        var citations = message.citations;
+        if (!citations || citations.length === 0) return '';
+        var isExternal = message.citationMode === 'external';
+        var header = isExternal ? '参考索引' : '来源';
+        var sub = isExternal ? '联网检索' : '内部知识库';
+        return (
+          '<div class="mt-2.5 pt-2 border-t border-[#f0f0f0]">' +
+          renderCitationSection(citations, header, sub, isExternal) +
+          '</div>'
+        );
+      }
+
+      function ensureDemoMessages(agentId) {
+        if (messagesByAgent[agentId].length > 0) return;
+        messagesByAgent[agentId] = (DEMO_EXCHANGES[agentId] || []).slice();
+      }
+
+      function messageHasCitations(m) {
+        if (!m || m.role !== 'assistant') return false;
+        if (m.citationMode === 'mixed') {
+          return (
+            (m.internalCitations && m.internalCitations.length > 0) ||
+            (m.externalCitations && m.externalCitations.length > 0)
+          );
+        }
+        return !!(m.citations && m.citations.length > 0);
+      }
+
+      function renderUserBubble(m) {
+        return (
+          '<div class="flex justify-end"><div class="max-w-[85%]">' +
+          '<div class="bg-primary text-white px-3.5 py-2.5 text-xs leading-relaxed rounded-ant rounded-tr-sm shadow-sm">' +
+          escapeHtml(m.text) +
+          '</div><span class="text-[10px] text-[rgba(0,0,0,0.35)] mt-1 block text-right">' +
+          m.time +
+          '</span></div></div>'
+        );
+      }
+
+      function renderAssistantAnswer(m) {
+        return (
+          '<div class="flex gap-2 max-w-[92%]">' +
+          '<div class="w-7 h-7 rounded-full agent-icon-gradient flex items-center justify-center shrink-0">' +
+          '<span class="text-white text-[8px] font-bold">AI</span></div>' +
+          '<div class="min-w-0 flex-1">' +
+          '<div class="bg-white px-3.5 py-2.5 text-xs leading-relaxed rounded-ant shadow-sm">' +
+          escapeHtml(m.text) +
+          '</div>' +
+          '<span class="text-[10px] text-[rgba(0,0,0,0.35)] mt-1 block">' +
+          m.time +
+          '</span></div></div>'
+        );
+      }
+
+      function buildConversationTurn(userMsg, assistantMsg) {
+        var html = '<div class="conversation-turn">';
+        html += '<p class="turn-step-label">用户输入问题</p>';
+        html += renderUserBubble(userMsg);
+        if (assistantMsg) {
+          html += '<p class="turn-step-label mt-3">智能体回答</p>';
+          html += renderAssistantAnswer(assistantMsg);
+          if (messageHasCitations(assistantMsg)) {
+            html += '<p class="turn-step-label mt-2">回答溯源</p>';
+            html += renderCitations(assistantMsg);
+          }
+        }
+        html += '</div>';
+        return html;
+      }
+
+      function buildMessagesHtml(agentId) {
+        const msgs = messagesByAgent[agentId];
+        var html = renderWelcome(agentId);
+        for (var i = 0; i < msgs.length; i++) {
+          if (msgs[i].role !== 'user') continue;
+          var assistantMsg =
+            i + 1 < msgs.length && msgs[i + 1].role === 'assistant' ? msgs[i + 1] : null;
+          html += buildConversationTurn(msgs[i], assistantMsg);
+          if (assistantMsg) i += 1;
+        }
+        return html;
+      }
+
+      function scrollMessageListToTop(el) {
+        if (!el) return;
+        el.scrollTop = 0;
+      }
+
+      function scrollMessageListToLatestTurn(el) {
+        if (!el) return;
+        var turns = el.querySelectorAll('.conversation-turn');
+        if (!turns.length) {
+          el.scrollTop = 0;
+          return;
+        }
+        turns[turns.length - 1].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+
+      function scrollActiveMessageListsToTop() {
+        scrollMessageListToTop(messageList);
+        if (fullscreenChatOpen) scrollMessageListToTop(fullscreenMessageList);
+      }
+
+      function scrollActiveMessageListsToLatestTurn() {
+        scrollMessageListToLatestTurn(messageList);
+        if (fullscreenChatOpen) scrollMessageListToLatestTurn(fullscreenMessageList);
+      }
+
+      function renderMessages(agentId, scrollMode) {
+        const html = buildMessagesHtml(agentId);
+        messageList.innerHTML = html;
+        if (fullscreenChatOpen) fullscreenMessageList.innerHTML = html;
+        if (scrollMode === 'latest') {
+          scrollActiveMessageListsToLatestTurn();
+        } else {
+          scrollActiveMessageListsToTop();
+        }
+      }
+
+      function updateAgentSwitcherUI(agentId) {
+        agentSwitcherBtns.forEach(function (btn) {
+          const active = btn.getAttribute('data-agent-id') === agentId;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      function selectAgent(agentId, enterConversation) {
+        if (!AGENTS[agentId]) return;
+        currentAgentId = agentId;
+        const agent = AGENTS[agentId];
+        chatAgentTitle.textContent = agent.name;
+        fullscreenAgentTitle.textContent = agent.name;
+        chatTopicHint.textContent = agent.hint;
+        updateAgentSwitcherUI(agentId);
+        ensureDemoMessages(agentId);
+        renderMessages(agentId);
+        if (enterConversation) {
+          sessionConversationAgentId = agentId;
+          showChatSubview('conversation');
+        }
+      }
+
+      function tryLogin() {
+        hideLoginError();
+        const username = (document.getElementById('login-username').value || '').trim();
+        const password = (document.getElementById('login-password').value || '').trim();
+
+        if (!username && !password) {
+          resetChatState();
+          showPage('chat');
+          showChatSubview('agents');
+          return;
+        }
+
+        if (username && !password) {
+          showLoginError('请输入密码');
+          return;
+        }
+
+        if (!username && password) {
+          showLoginError('请输入账号');
+          return;
+        }
+
+        if (username === DEMO_USERNAME && password === DEMO_PASSWORD) {
+          resetChatState();
+          showPage('chat');
+          showChatSubview('agents');
+          return;
+        }
+
+        showLoginError('账号或密码错误');
+      }
+
+      function getActiveChatInput() {
+        return fullscreenChatOpen ? fullscreenChatInput : chatInput;
+      }
+
+      function clearChatInputs() {
+        chatInput.value = '';
+        fullscreenChatInput.value = '';
+      }
+
+      function sendMessage() {
+        const inputEl = getActiveChatInput();
+        const text = (inputEl.value || '').trim();
+        if (!text || !currentAgentId) return;
+        const time = formatTime();
+        messagesByAgent[currentAgentId].push({ role: 'user', text: text, time: time });
+        renderMessages(currentAgentId, 'latest');
+        clearChatInputs();
+        const agentId = currentAgentId;
+        const replyText = AGENTS[agentId].mockReply;
+        setTimeout(function () {
+          if (currentAgentId !== agentId) return;
+          messagesByAgent[agentId].push({
+            role: 'assistant',
+            text: replyText,
+            time: formatTime(),
+          });
+          renderMessages(agentId, 'latest');
+        }, 600);
+      }
+
+      document.getElementById('btn-entry-login').addEventListener('click', function () {
+        showPage('login');
+      });
+
+      document.getElementById('btn-login-submit').addEventListener('click', function (e) {
+        e.preventDefault();
+        tryLogin();
+      });
+
+      document.getElementById('btn-login-reset').addEventListener('click', function () {
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-captcha').value = '';
+        document.getElementById('login-password').type = 'password';
+        document.getElementById('login-eye-open').classList.remove('hidden');
+        document.getElementById('login-eye-closed').classList.add('hidden');
+        hideLoginError();
+      });
+
+      document.getElementById('btn-login-password-toggle').addEventListener('click', function () {
+        const pwdInput = document.getElementById('login-password');
+        const eyeOpen = document.getElementById('login-eye-open');
+        const eyeClosed = document.getElementById('login-eye-closed');
+        const showPassword = pwdInput.type === 'password';
+        pwdInput.type = showPassword ? 'text' : 'password';
+        eyeOpen.classList.toggle('hidden', showPassword);
+        eyeClosed.classList.toggle('hidden', !showPassword);
+      });
+
+      loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        tryLogin();
+      });
+
+      document.getElementById('btn-pick-teaching').addEventListener('click', function () {
+        selectAgent('teaching', true);
+      });
+      document.getElementById('btn-pick-research').addEventListener('click', function () {
+        selectAgent('research', true);
+      });
+
+      agentSwitcherBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const id = btn.getAttribute('data-agent-id');
+          if (currentAgentId === id) return;
+          selectAgent(id, true);
+        });
+      });
+
+      btnAgentSettings.addEventListener('click', function (e) {
+        e.stopPropagation();
+        hideChatSettingsMenu();
+        toggleAgentSettingsMenu();
+      });
+      document.getElementById('btn-settings-exit').addEventListener('click', function () {
+        hideAgentSettingsMenu();
+        endSession();
+      });
+      document.getElementById('btn-settings-continue').addEventListener('click', function () {
+        hideAgentSettingsMenu();
+        showConfirm(CONFIRM_CONTINUE_AGENT_MESSAGE, continueAgentConversation);
+      });
+
+      btnChatSettings.addEventListener('click', function (e) {
+        e.stopPropagation();
+        hideAgentSettingsMenu();
+        toggleChatSettingsMenu();
+      });
+      document.getElementById('btn-chat-settings-exit').addEventListener('click', function () {
+        hideChatSettingsMenu();
+        endSession();
+      });
+      document.getElementById('btn-chat-settings-continue').addEventListener('click', function () {
+        hideChatSettingsMenu();
+        showConfirm(CONFIRM_CONTINUE_CHAT_MESSAGE, function () {});
+      });
+
+      document.getElementById('confirm-dialog-cancel').addEventListener('click', hideConfirm);
+      document.getElementById('confirm-dialog-backdrop').addEventListener('click', hideConfirm);
+      document.getElementById('confirm-dialog-ok').addEventListener('click', function () {
+        const fn = confirmOnConfirm;
+        hideConfirm();
+        if (fn) fn();
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!agentSettingsMenu.classList.contains('hidden') && !agentSettingsWrap.contains(e.target)) {
+          hideAgentSettingsMenu();
+        }
+        if (!chatSettingsMenu.classList.contains('hidden') && !chatSettingsWrap.contains(e.target)) {
+          hideChatSettingsMenu();
+        }
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        if (!confirmDialog.classList.contains('hidden')) {
+          hideConfirm();
+          return;
+        }
+        hideAgentSettingsMenu();
+        hideChatSettingsMenu();
+      });
+
+      document.getElementById('btn-fullscreen-chat').addEventListener('click', function () {
+        if (!currentAgentId || chatViewConversation.classList.contains('hidden')) return;
+        showFullscreenChat(!fullscreenChatOpen);
+      });
+
+      document.getElementById('btn-exit-fullscreen-chat').addEventListener('click', function () {
+        showFullscreenChat(false);
+      });
+
+      document.getElementById('btn-send-message').addEventListener('click', sendMessage);
+      document.getElementById('btn-fullscreen-send-message').addEventListener('click', sendMessage);
+      chatInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      fullscreenChatInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      document.getElementById('login-backdrop').addEventListener('click', function () {
+        showPage('entry');
+      });
+
+      showPage('entry');
+      showChatSubview('agents');
+    })();
+  </script>
+
+</body>
+</html>
