@@ -893,7 +893,6 @@
                 </svg>
               </button>
               <div id="agent-settings-menu" class="settings-menu hidden" role="menu" aria-label="智能体选择设置">
-                <button type="button" id="btn-settings-continue" class="settings-menu-item" role="menuitem">返回</button>
                 <button type="button" id="btn-settings-exit" class="settings-menu-item" role="menuitem">退出</button>
               </div>
             </div>
@@ -981,7 +980,6 @@
                   </svg>
                 </button>
                 <div id="chat-settings-menu" class="settings-menu hidden" role="menu" aria-label="对话设置">
-                  <button type="button" id="btn-chat-settings-continue" class="settings-menu-item" role="menuitem">返回</button>
                   <button type="button" id="btn-chat-settings-exit" class="settings-menu-item" role="menuitem">退出</button>
                 </div>
               </div>
@@ -1495,7 +1493,7 @@
               c.index +
               ']</span> ' +
               escapeHtml(c.label) +
-              ' <span class="inline-block text-[10px] px-1 py-px rounded border border-[#d9d9d9] bg-[#fafafa] text-[rgba(0,0,0,0.45)] align-middle">内部知识库</span></li>'
+              '</li>'
             );
           })
           .join('');
@@ -1887,9 +1885,6 @@
         hideAgentSettingsMenu();
         showConfirm(CONFIRM_EXIT_MESSAGE, endSession);
       });
-      document.getElementById('btn-settings-continue').addEventListener('click', function () {
-        hideAgentSettingsMenu();
-      });
 
       btnChatSettings.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -1899,10 +1894,6 @@
       document.getElementById('btn-chat-settings-exit').addEventListener('click', function () {
         hideChatSettingsMenu();
         showConfirm(CONFIRM_EXIT_MESSAGE, endSession);
-      });
-      document.getElementById('btn-chat-settings-continue').addEventListener('click', function () {
-        hideChatSettingsMenu();
-        showChatSubview('agents');
       });
 
       document.getElementById('confirm-dialog-cancel').addEventListener('click', hideConfirm);
