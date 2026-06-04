@@ -897,8 +897,8 @@
                 </svg>
               </button>
               <div id="agent-settings-menu" class="settings-menu hidden" role="menu" aria-label="智能体选择设置">
+                <button type="button" id="btn-settings-continue" class="settings-menu-item" role="menuitem">返回</button>
                 <button type="button" id="btn-settings-exit" class="settings-menu-item" role="menuitem">退出</button>
-                <button type="button" id="btn-settings-continue" class="settings-menu-item" role="menuitem">继续对话</button>
               </div>
             </div>
           </header>
@@ -985,8 +985,8 @@
                   </svg>
                 </button>
                 <div id="chat-settings-menu" class="settings-menu hidden" role="menu" aria-label="对话设置">
+                  <button type="button" id="btn-chat-settings-continue" class="settings-menu-item" role="menuitem">返回</button>
                   <button type="button" id="btn-chat-settings-exit" class="settings-menu-item" role="menuitem">退出</button>
-                  <button type="button" id="btn-chat-settings-continue" class="settings-menu-item" role="menuitem">继续对话</button>
                 </div>
               </div>
             </div>
@@ -1352,8 +1352,7 @@
       const confirmDialogTitle = document.getElementById('confirm-dialog-title');
       let confirmOnConfirm = null;
 
-      const CONFIRM_CONTINUE_AGENT_MESSAGE = '确定继续上次对话吗？';
-      const CONFIRM_CONTINUE_CHAT_MESSAGE = '确定继续当前对话吗？';
+      const CONFIRM_EXIT_MESSAGE = '确定要退出并返回首页吗？';
 
       function showConfirm(message, onConfirm, title) {
         confirmDialogMessage.textContent = message;
@@ -1396,21 +1395,6 @@
 
       function toggleChatSettingsMenu() {
         toggleSettingsMenu(btnChatSettings, chatSettingsMenu);
-      }
-
-      function agentHasConversationHistory(agentId) {
-        return !!(agentId && messagesByAgent[agentId] && messagesByAgent[agentId].length > 0);
-      }
-
-      function continueAgentConversation() {
-        hideAgentSettingsMenu();
-        const resumeId = currentAgentId || sessionConversationAgentId;
-        if (!resumeId || !agentHasConversationHistory(resumeId)) return;
-        if (!currentAgentId) {
-          selectAgent(resumeId, false);
-        }
-        showChatSubview('conversation');
-        renderMessages(resumeId);
       }
 
       function showPage(name) {
@@ -1818,11 +1802,10 @@
       });
       document.getElementById('btn-settings-exit').addEventListener('click', function () {
         hideAgentSettingsMenu();
-        endSession();
+        showConfirm(CONFIRM_EXIT_MESSAGE, endSession);
       });
       document.getElementById('btn-settings-continue').addEventListener('click', function () {
         hideAgentSettingsMenu();
-        showConfirm(CONFIRM_CONTINUE_AGENT_MESSAGE, continueAgentConversation);
       });
 
       btnChatSettings.addEventListener('click', function (e) {
@@ -1832,11 +1815,11 @@
       });
       document.getElementById('btn-chat-settings-exit').addEventListener('click', function () {
         hideChatSettingsMenu();
-        endSession();
+        showConfirm(CONFIRM_EXIT_MESSAGE, endSession);
       });
       document.getElementById('btn-chat-settings-continue').addEventListener('click', function () {
         hideChatSettingsMenu();
-        showConfirm(CONFIRM_CONTINUE_CHAT_MESSAGE, function () {});
+        showChatSubview('agents');
       });
 
       document.getElementById('confirm-dialog-cancel').addEventListener('click', hideConfirm);
